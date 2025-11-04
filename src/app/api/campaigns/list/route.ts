@@ -47,17 +47,33 @@ export async function GET(): Promise<Response> {
       },
     });
 
-    const formattedCampaigns: CampaignListItem[] = campaigns.map((campaign) => ({
-      id: campaign.id,
-      name: campaign.name,
-      industry: campaign.industry,
-      audience: campaign.audience,
-      tone: campaign.tone,
-      createdAt: campaign.createdAt,
-      headlineCount: campaign._count.headlines,
-      imageCount: campaign._count.images,
-      creativeCount: campaign._count.creatives,
-    }));
+    type CampaignWithCount = {
+      id: string;
+      name: string;
+      industry: string;
+      audience: string;
+      tone: string;
+      createdAt: Date;
+      _count: {
+        headlines: number;
+        images: number;
+        creatives: number;
+      };
+    };
+
+    const formattedCampaigns: CampaignListItem[] = campaigns.map(
+      (campaign: CampaignWithCount): CampaignListItem => ({
+        id: campaign.id,
+        name: campaign.name,
+        industry: campaign.industry,
+        audience: campaign.audience,
+        tone: campaign.tone,
+        createdAt: campaign.createdAt,
+        headlineCount: campaign._count.headlines,
+        imageCount: campaign._count.images,
+        creativeCount: campaign._count.creatives,
+      })
+    );
 
     const response: ApiResponse<CampaignsListResponse> = {
       success: true,

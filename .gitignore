@@ -41,9 +41,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma generated - included for Vercel deployment
+# prisma generated (standard location)
 # /src/generated/prisma
-!/src/generated/prisma/**/*.ts
-!/src/generated/prisma/**/*.js
-!/src/generated/prisma/**/*.node
-!/src/generated/prisma/**/*.json

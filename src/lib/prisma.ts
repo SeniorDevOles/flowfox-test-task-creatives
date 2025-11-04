@@ -1,11 +1,10 @@
-import type { PrismaClient } from "@/generated/prisma/client";
-import { PrismaClient as PrismaClientConstructor } from "@/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 declare global {
   var prismaGlobal: PrismaClient | undefined;
 }
 
-export const prisma: PrismaClient = global.prismaGlobal ?? new PrismaClientConstructor({
+export const prisma: PrismaClient = global.prismaGlobal ?? new PrismaClient({
   log: ["warn", "error"],
 });
 
