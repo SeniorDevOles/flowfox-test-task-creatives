@@ -9,7 +9,7 @@ interface CampaignListItem {
   industry: string;
   audience: string;
   tone: string;
-  createdAt: string;
+  created_at: string;
   headlineCount: number;
   imageCount: number;
   creativeCount: number;
@@ -156,7 +156,7 @@ export default function CampaignsListPage(): React.ReactElement {
                     <span>{campaign.audience}</span>
                   </div>
                   <div className="text-xs text-gray-500 mt-3">
-                    Created {formatDate(campaign.createdAt)}
+                    Created {formatDate(campaign.created_at)}
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getOpenAIClient } from "@/lib/openai";
 
 interface ApiResponse<T> {
@@ -42,8 +42,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     const { campaignId, count, context } = RequestSchema.parse(body);
 
     // Ensure campaign exists
-    const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
-    if (!campaign) {
+    const { data: campaign, error: campaignError } = await supabase
+      .from("Campaign")
+      .select("id")
+      .eq("id", campaignId)
+      .single();
+
+    if (campaignError || !campaign) {
       const response: ApiResponse<never> = { success: false, error: "Campaign not found" };
       return Response.json(response, { status: 404 });
     }
@@ -94,22 +99,25 @@ Beschreibung: ${context.description ?? "-"}`;
     // Ensure we only create exactly the requested count
     const itemsToCreate = items.slice(0, count);
 
-    const created = await prisma.$transaction(
-      itemsToCreate.map((text) =>
-        prisma.headline.create({
-          data: {
-            text,
-            status: "READY",
-            campaignId,
-          },
-          select: { id: true, text: true },
-        })
-      )
-    );
+    // Insert headlines
+    const headlinesToInsert = itemsToCreate.map((text) => ({
+      text,
+      status: "READY",
+      campaign_id: campaignId,
+    }));
+
+    const { data: created, error: insertError } = await supabase
+      .from("Headline")
+      .insert(headlinesToInsert)
+      .select("id, text");
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
 
     const response: ApiResponse<HeadlinesResponse> = {
       success: true,
-      data: { headlines: created },
+      data: { headlines: created || [] },
     };
     return Response.json(response);
   } catch (err: unknown) {

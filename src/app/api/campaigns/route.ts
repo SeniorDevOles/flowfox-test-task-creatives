@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -15,7 +15,7 @@ interface CampaignData {
   audience: string;
   tone: string;
   description?: string | null;
-  createdAt: Date;
+  created_at: string;
 }
 
 interface CampaignResponse {
@@ -46,28 +46,29 @@ export async function POST(req: NextRequest): Promise<Response> {
       trustworthy: "TRUSTWORTHY",
     } as const;
 
-    const created = await prisma.campaign.create({
-      data: {
+    const { data, error } = await supabase
+      .from("Campaign")
+      .insert({
         name: dto.name,
         industry: dto.industry,
         audience: dto.audience,
         tone: toneMap[dto.tone],
-        description: dto.description,
-      },
-      select: {
-        id: true,
-        name: true,
-        industry: true,
-        audience: true,
-        tone: true,
-        description: true,
-        createdAt: true,
-      },
-    });
+        description: dto.description || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error("Failed to create campaign");
+    }
 
     const response: ApiResponse<CampaignResponse> = {
       success: true,
-      data: { campaign: created },
+      data: { campaign: data },
     };
     return Response.json(response);
   } catch (err: unknown) {

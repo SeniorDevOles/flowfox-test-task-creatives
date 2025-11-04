@@ -4,21 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && next build",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down -v",
-    "db:reset": "docker compose down -v && docker compose up -d",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "db:reset": "docker compose down -v && docker compose up -d"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/client": "^6.18.0",
+    "@supabase/supabase-js": "^2.47.10",
     "ai": "^5.0.86",
     "next": "16.0.1",
     "openai": "^6.7.0",
@@ -34,7 +29,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
-    "prisma": "^6.18.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

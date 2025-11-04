@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -13,15 +13,15 @@ interface CampaignData {
   audience: string;
   tone: string;
   description?: string | null;
-  createdAt: Date;
-  headlines: Array<{ id: string; text: string; status: string; createdAt: Date }>;
-  images: Array<{ id: string; imageUrl: string; prompt: string; status: string; createdAt: Date }>;
+  created_at: string;
+  headlines: Array<{ id: string; text: string; status: string; created_at: string }>;
+  images: Array<{ id: string; image_url: string; prompt: string; status: string; created_at: string }>;
   creatives: Array<{
     id: string;
-    headlineId: string;
-    imageId: string;
+    headline_id: string;
+    image_id: string;
     status: string;
-    createdAt: Date;
+    created_at: string;
   }>;
 }
 
@@ -39,29 +39,36 @@ export async function GET(
 ): Promise<Response> {
   try {
     const { id } = await params;
-    const campaign = await prisma.campaign.findUnique({
-      where: { id },
-      include: {
-        headlines: { select: { id: true, text: true, status: true, createdAt: true } },
-        images: { select: { id: true, imageUrl: true, prompt: true, status: true, createdAt: true } },
-        creatives: {
-          select: {
-            id: true,
-            headlineId: true,
-            imageId: true,
-            status: true,
-            createdAt: true,
-          },
-        },
-      },
-    });
-    if (!campaign) {
+
+    // Fetch campaign
+    const { data: campaign, error: campaignError } = await supabase
+      .from("Campaign")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (campaignError || !campaign) {
       const response: ApiResponse<never> = { success: false, error: "Campaign not found" };
       return Response.json(response, { status: 404 });
     }
+
+    // Fetch related data
+    const [headlinesRes, imagesRes, creativesRes] = await Promise.all([
+      supabase.from("Headline").select("id, text, status, created_at").eq("campaign_id", id),
+      supabase.from("Image").select("id, image_url, prompt, status, created_at").eq("campaign_id", id),
+      supabase.from("Creative").select("id, headline_id, image_id, status, created_at").eq("campaign_id", id),
+    ]);
+
+    const campaignData: CampaignData = {
+      ...campaign,
+      headlines: headlinesRes.data || [],
+      images: imagesRes.data || [],
+      creatives: creativesRes.data || [],
+    };
+
     const response: ApiResponse<CampaignResponse> = {
       success: true,
-      data: { campaign },
+      data: { campaign: campaignData },
     };
     return Response.json(response);
   } catch (err: unknown) {

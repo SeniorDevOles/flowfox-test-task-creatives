@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getOpenAIClient } from "@/lib/openai";
 
 interface ApiResponse<T> {
@@ -11,7 +11,7 @@ interface ApiResponse<T> {
 
 interface ImageData {
   id: string;
-  imageUrl: string;
+  image_url: string;
   prompt: string;
 }
 
@@ -57,8 +57,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     const body = await req.json();
     const { campaignId, count, context } = RequestSchema.parse(body);
 
-    const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
-    if (!campaign) {
+    const { data: campaign, error: campaignError } = await supabase
+      .from("Campaign")
+      .select("id")
+      .eq("id", campaignId)
+      .single();
+
+    if (campaignError || !campaign) {
       const response: ApiResponse<never> = { success: false, error: "Campaign not found" };
       return Response.json(response, { status: 404 });
     }
@@ -79,15 +84,22 @@ export async function POST(req: NextRequest): Promise<Response> {
       if (!url) {
         throw new Error("Image generation returned no URL");
       }
-      const created = await prisma.image.create({
-        data: {
-          imageUrl: url,
+
+      const { data: created, error: insertError } = await supabase
+        .from("Image")
+        .insert({
+          image_url: url,
           prompt,
           status: "READY",
-          campaignId,
-        },
-        select: { id: true, imageUrl: true, prompt: true },
-      });
+          campaign_id: campaignId,
+        })
+        .select("id, image_url, prompt")
+        .single();
+
+      if (insertError || !created) {
+        throw new Error(insertError?.message || "Failed to save image");
+      }
+
       results.push(created);
     }
 

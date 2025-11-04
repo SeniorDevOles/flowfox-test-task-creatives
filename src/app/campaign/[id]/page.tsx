@@ -5,8 +5,8 @@ import { showToast } from "@/components/Toast";
 import { ImageWithLoader } from "@/components/ImageWithLoader";
 
 type Headline = { id: string; text: string };
-type Img = { id: string; imageUrl: string; prompt: string };
-type Creative = { id: string; headlineId: string; imageId: string };
+type Img = { id: string; image_url: string; prompt: string };
+type Creative = { id: string; headline_id: string; image_id: string };
 
 async function fetchCampaign(id: string) {
   const res = await fetch(`/api/campaigns/${id}`);
@@ -20,8 +20,8 @@ async function fetchCampaign(id: string) {
     tone: string;
     description?: string;
     headlines: Array<{ id: string; text: string }>;
-    images: Array<{ id: string; imageUrl: string; prompt: string }>;
-    creatives: Array<{ id: string; headlineId: string; imageId: string }>;
+    images: Array<{ id: string; image_url: string; prompt: string }>;
+    creatives: Array<{ id: string; headline_id: string; image_id: string }>;
   };
 }
 
@@ -40,8 +40,8 @@ export default function CampaignPage() {
   const [genError, setGenError] = useState<{ type: "headlines" | "images"; message: string } | null>(null);
   const [deletingCreative, setDeletingCreative] = useState<string | null>(null);
 
-  const pairedHeadlineIds = useMemo(() => new Set(creatives.map((c) => c.headlineId)), [creatives]);
-  const pairedImageIds = useMemo(() => new Set(creatives.map((c) => c.imageId)), [creatives]);
+  const pairedHeadlineIds = useMemo(() => new Set(creatives.map((c) => c.headline_id)), [creatives]);
+  const pairedImageIds = useMemo(() => new Set(creatives.map((c) => c.image_id)), [creatives]);
 
   const refresh = async () => {
     setLoading(true);
@@ -412,7 +412,7 @@ export default function CampaignPage() {
                   onClick={() => setPairing((p) => ({ ...p, imageId: img.id }))}
                 >
                   <ImageWithLoader
-                    src={img.imageUrl}
+                    src={img.image_url}
                     alt={img.prompt}
                     className="w-full aspect-[16/9] object-cover rounded-lg border-2 border-gray-200 group-hover:border-blue-400 transition-colors"
                   />
@@ -481,8 +481,8 @@ export default function CampaignPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {creatives.map((c) => {
-              const h = headlines.find((x) => x.id === c.headlineId);
-              const img = images.find((x) => x.id === c.imageId);
+              const h = headlines.find((x) => x.id === c.headline_id);
+              const img = images.find((x) => x.id === c.image_id);
               if (!h || !img) return null;
               return (
                 <div
@@ -490,7 +490,7 @@ export default function CampaignPage() {
                   className="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow group"
                 >
                   <ImageWithLoader
-                    src={img.imageUrl}
+                    src={img.image_url}
                     alt={img.prompt}
                     className="w-full aspect-[16/9] object-cover"
                   />

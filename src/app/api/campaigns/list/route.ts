@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -12,7 +12,7 @@ interface CampaignListItem {
   industry: string;
   audience: string;
   tone: string;
-  createdAt: Date;
+  created_at: string;
   headlineCount: number;
   imageCount: number;
   creativeCount: number;
@@ -28,52 +28,44 @@ function isError(error: unknown): error is Error {
 
 export async function GET(): Promise<Response> {
   try {
-    const campaigns = await prisma.campaign.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        industry: true,
-        audience: true,
-        tone: true,
-        createdAt: true,
-        _count: {
-          select: {
-            headlines: true,
-            images: true,
-            creatives: true,
-          },
-        },
-      },
-    });
+    const { data: campaigns, error } = await supabase
+      .from("Campaign")
+      .select("id, name, industry, audience, tone, created_at")
+      .order("created_at", { ascending: false });
 
-    type CampaignWithCount = {
-      id: string;
-      name: string;
-      industry: string;
-      audience: string;
-      tone: string;
-      createdAt: Date;
-      _count: {
-        headlines: number;
-        images: number;
-        creatives: number;
-      };
-    };
+    if (error) {
+      throw new Error(error.message);
+    }
 
-    const formattedCampaigns: CampaignListItem[] = campaigns.map(
-      (campaign: CampaignWithCount): CampaignListItem => ({
-        id: campaign.id,
-        name: campaign.name,
-        industry: campaign.industry,
-        audience: campaign.audience,
-        tone: campaign.tone,
-        createdAt: campaign.createdAt,
-        headlineCount: campaign._count.headlines,
-        imageCount: campaign._count.images,
-        creativeCount: campaign._count.creatives,
+    // Get counts for each campaign
+    const campaignsWithCounts = await Promise.all(
+      (campaigns || []).map(async (campaign) => {
+        const [headlinesRes, imagesRes, creativesRes] = await Promise.all([
+          supabase.from("Headline").select("id", { count: "exact", head: true }).eq("campaign_id", campaign.id),
+          supabase.from("Image").select("id", { count: "exact", head: true }).eq("campaign_id", campaign.id),
+          supabase.from("Creative").select("id", { count: "exact", head: true }).eq("campaign_id", campaign.id),
+        ]);
+
+        return {
+          ...campaign,
+          headlineCount: headlinesRes.count || 0,
+          imageCount: imagesRes.count || 0,
+          creativeCount: creativesRes.count || 0,
+        };
       })
     );
+
+    const formattedCampaigns: CampaignListItem[] = campaignsWithCounts.map((campaign) => ({
+      id: campaign.id,
+      name: campaign.name,
+      industry: campaign.industry,
+      audience: campaign.audience,
+      tone: campaign.tone,
+      created_at: campaign.created_at,
+      headlineCount: campaign.headlineCount,
+      imageCount: campaign.imageCount,
+      creativeCount: campaign.creativeCount,
+    }));
 
     const response: ApiResponse<CampaignsListResponse> = {
       success: true,
@@ -86,4 +78,3 @@ export async function GET(): Promise<Response> {
     return Response.json(response, { status: 500 });
   }
 }
-
