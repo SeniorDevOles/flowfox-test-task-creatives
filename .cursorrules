@@ -1,0 +1,89 @@
+# FlowFox Creatives Generation Service - Cursor Rules
+
+## TypeScript Standards
+- Always use strict TypeScript mode
+- Never use `any` type - use proper types or `unknown` with type guards
+- Use explicit return types for functions
+- Prefer interfaces over type aliases for object shapes
+- Use Zod schemas for runtime validation and type inference
+- Import types with `import type` when importing only types
+
+## Next.js 15 App Router
+- Use App Router conventions (`app/` directory)
+- Server Components by default, add `"use client"` only when needed
+- Use async/await for server components and API routes
+- In API routes, `params` is a Promise in Next.js 16 - always await it
+- Use `useParams()` hook for client components accessing dynamic routes
+- Use proper error boundaries and error.tsx files
+
+## Prisma & Database
+- Always use Prisma Client from `@/lib/prisma` singleton pattern
+- Use transactions for related operations
+- Include proper error handling for database operations
+- Use select/include to avoid over-fetching data
+- Handle Prisma errors gracefully with user-friendly messages
+
+## API Design
+- All API responses follow pattern: `{ success: boolean, data?: T, error?: string }`
+- Use proper HTTP status codes (200, 400, 404, 500)
+- Validate all inputs with Zod schemas
+- Return structured error messages
+- Handle OpenAI API errors with retry logic and clear messages
+
+## Error Handling
+- Never use `alert()` - use toast notifications or inline error messages
+- Always wrap async operations in try/catch blocks
+- Provide retry mechanisms for failed operations
+- Show user-friendly error messages
+- Log errors appropriately for debugging
+
+## UI/UX Standards
+- Use Tailwind CSS for styling (no inline styles)
+- Maintain consistent spacing using Tailwind utilities
+- Show loading states for all async operations
+- Disable buttons during loading
+- Use proper focus states and accessibility
+- Provide empty states with helpful messages
+- Use toast notifications for user feedback
+
+## React Patterns
+- Use proper hooks dependencies in useEffect
+- Extract reusable logic into custom hooks
+- Use useMemo/useCallback for expensive operations
+- Prefer composition over prop drilling
+- Keep components focused and single-purpose
+
+## Code Organization
+- Place components in `src/components/`
+- Place utilities in `src/lib/`
+- Place API routes in `src/app/api/`
+- Keep files focused - split large components
+- Use meaningful variable and function names
+- Add comments for complex logic
+
+## OpenAI Integration
+- Handle rate limits gracefully
+- Provide clear error messages for API failures
+- Use proper model names (dall-e-3 for images, gpt-4o-mini for text)
+- Generate German headlines (FlowFox targets German market)
+- Use JSON mode for structured outputs when possible
+
+## Form Handling
+- Use React Hook Form with Zod validation
+- Show validation errors inline
+- Disable form during submission
+- Provide clear validation messages
+- Use proper HTML5 input types
+
+## Testing & Quality
+- Ensure all TypeScript compiles without errors (`npx tsc --noEmit`)
+- No console.log in production code
+- Handle edge cases (empty arrays, null values, etc.)
+- Provide fallbacks for missing data
+
+## Git & Code Quality
+- Write clear commit messages
+- Keep commits focused and atomic
+- Never commit secrets or API keys
+- Use .env.example for environment variable templates
+

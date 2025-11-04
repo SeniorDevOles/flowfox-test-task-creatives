@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Tone of voice for a campaign
+enum Tone {
+  PROFESSIONAL
+  CASUAL
+  EXCITING
+  TRUSTWORTHY
+}
+
+/// Generic status for generated content (headlines/images)
+enum ContentStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+/// Status for creative pairs
+enum CreativeStatus {
+  ACTIVE
+  DELETED
+}
+
+model Campaign {
+  id          String     @id @default(cuid())
+  name        String
+  industry    String
+  audience    String
+  tone        Tone
+  description String?
+
+  headlines   Headline[]
+  images      Image[]
+  creatives   Creative[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Headline {
+  id         String        @id @default(cuid())
+  text       String
+  status     ContentStatus @default(PENDING)
+
+  campaignId String
+  campaign   Campaign      @relation(fields: [campaignId], references: [id])
+
+  creatives  Creative[]
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([campaignId])
+}
+
+model Image {
+  id         String        @id @default(cuid())
+  imageUrl   String
+  prompt     String
+  status     ContentStatus @default(PENDING)
+
+  campaignId String
+  campaign   Campaign      @relation(fields: [campaignId], references: [id])
+
+  creatives  Creative[]
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([campaignId])
+}
+
+model Creative {
+  id         String         @id @default(cuid())
+  campaignId String
+  headlineId String
+  imageId    String
+  status     CreativeStatus @default(ACTIVE)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  headline   Headline @relation(fields: [headlineId], references: [id])
+  image      Image    @relation(fields: [imageId], references: [id])
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([campaignId])
+  @@index([headlineId])
+  @@index([imageId])
+  @@unique([campaignId, headlineId, imageId])
+}
