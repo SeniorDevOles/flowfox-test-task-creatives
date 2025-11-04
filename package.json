@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && next build",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down -v",
     "db:reset": "docker compose down -v && docker compose up -d",
